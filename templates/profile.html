@@ -5,6 +5,31 @@
 {% endblock %}
 
 {% block content %}
+<script>
+    function uploadAvatar() {
+        var formData = new FormData();
+        var file = document.querySelector('input[type=file]').files[0];
+        formData.append('file', file);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload_avatar', true);
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                // Обновление изображения на странице без перезагрузки
+                var preview = document.querySelector('.avatar');
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                alert('Произошла ошибка при загрузке изображения.');
+            }
+        };
+        xhr.send(formData);
+    }
+</script>
+
 <section class="bg-gray-50 dark:bg-gray-900 p-3 sm:p-5">
     <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
         <!-- Start coding here -->
@@ -19,11 +44,22 @@
             <div class="overflow-y-auto py-5 px-3 h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                 <ul class="space-y-2">
                     <li>
-
-                        <div class="flex justify-center items-center">
-                            <img class="rounded-full" width="100px" src="https://w7.pngwing.com/pngs/862/646/png-transparent-beard-hipster-male-man-avatars-xmas-giveaway-icon-thumbnail.png" alt="">
+                        <div class="flex justify-center items-center flex-col w-full">
+                            <div class="relative" onmouseover="showUploadButton()" onmouseout="hideUploadButton()">
+                                {% if current_user.avatar_path %}
+                                <img class="relative avatar w-[100px] h-[100px] rounded-full pointer-events-none" width="100%" src="{{ current_user.avatar_path }}" alt="Avatar" draggable="false">
+                                {% else %}
+                                <img class="relative avatar w-[100px] h-[100px] rounded-full pointer-events-none" width="100%" src="https://w7.pngwing.com/pngs/862/646/png-transparent-beard-hipster-male-man-avatars-xmas-giveaway-icon-thumbnail.png" alt="Avatar" draggable="false">
+                                {% endif %}
+                                <div class="absolute top-0 left-0 w-[100px] h-[100px] hover:bg-red-300 rounded-full cursor-pointer" onclick="document.getElementById('updateAvatar').click()"></div>
+                                <form id="avatarForm" class="hidden" enctype="multipart/form-data">
+                                    <input type="file" name="file" id="updateAvatar" onchange="uploadAvatar()">
+                                </form>
+                            </div>
                         </div>
                     </li>
+
+
                     <li>
                         <div class="mt-4 flex justify-center items-center text-gray-900 font-bold text-xl dark:text-white">
                             <span>{{ username }}</span>

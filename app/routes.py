@@ -6,6 +6,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import secrets
 from flask_mail import Mail, Message
+from flask import jsonify
+from validate_email import validate_email
+import os
+from werkzeug.utils import secure_filename
+import uuid
 
 # Настройки SMTP сервера
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -33,8 +38,8 @@ def termsOfUse():
     return render_template('terms-of-use.html')
 #----------------------------------------------------------------
 
-# Домашняя страница (/home)
-@app.route('/home')
+# Домашняя страница (/)
+@app.route('/')
 def home():
     return render_template('home.html')
 #----------------------------------------------------------------
@@ -104,30 +109,65 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Если пользователь уже аутентифицирован, перенаправляем его на страницу профиля
     if current_user.is_authenticated:
         return redirect(url_for('profile'))
 
-    # Остальной код функции остается без изменений
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        # Проверяем, что пользователь с таким email уже не существует
+        confirm_password = request.form['repeat-password']
+
+        # Проверяем уникальность логина и почты
         if User.query.filter_by(email=email).first():
             flash('Пользователь с таким email уже зарегистрирован!', 'error')
             return redirect(url_for('register'))
         if User.query.filter_by(username=username).first():
             flash('Пользователь с таким именем пользователя уже зарегистрирован!', 'error')
             return redirect(url_for('register'))
+
+         # Добавлены дополнительные проверки на валидность логина и почты
+        if not (3 <= len(username) <= 12 and username.isalnum()):
+            flash('Логин должен содержать от 3 до 12 символов и состоять только из латинских букв и цифр', 'error')
+            return redirect(url_for('register'))
+        if not validate_email(email):
+            flash('Пожалуйста, введите действительный адрес электронной почты', 'error')
+            return redirect(url_for('register'))
+
+        # Проверяем соответствие пароля с подтверждением
+        if password != confirm_password:
+            flash('Пароли не совпадают, перепроверьте их вручную!', 'error')
+            return redirect(url_for('register'))
+
+        # Проверяем дополнительные условия валидации пароля
+        if len(password) < 8 or len(password) > 20:
+            flash('Пароль должен содержать от 8 до 20 символов', 'error')
+            return redirect(url_for('register'))
+        if not any(char.isupper() for char in password):
+            flash('Пароль должен содержать хотя бы одну заглавную букву', 'error')
+            return redirect(url_for('register'))
+        if not any(char.islower() for char in password):
+            flash('Пароль должен содержать хотя бы одну строчную букву', 'error')
+            return redirect(url_for('register'))
+        if not any(char.isdigit() for char in password):
+            flash('Пароль должен содержать хотя бы одну цифру', 'error')
+            return redirect(url_for('register'))
+        if not any(char.isalnum() for char in password):
+            flash('Пароль должен содержать хотя бы один спецсимвол', 'error')
+            return redirect(url_for('register'))
+
+
+
         # Создаем нового пользователя
         new_user = User(username=username, email=email, password=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
+
         # Авторизуем пользователя
         login_user(new_user)
         flash('Регистрация прошла успешно!', 'success')
         return redirect(url_for('profile'))
+
     return render_template('register.html')
 
 
@@ -189,17 +229,15 @@ def reset_password(token):
             confirm_password = request.form['confirm-password']  # Получаем подтверждение пароля
             if password != confirm_password:  # Проверяем, что пароли совпадают
                 errors = [('error', 'Пароли не совпадают, перепроверьте их вручную!')]  # Создаем список ошибок
-                return render_template('reset-password.html', token=token, errors=errors)  # Передаем ошибки в шаблон
+                return jsonify({'success': False, 'errors': errors}), 400  # Возвращаем ошибку с соответствующим статусом
             user.password = generate_password_hash(password)
             user.reset_token = None
             user.reset_token_expiration = None
             db.session.commit()
-            flash('Пароль успешно изменен', 'success')
-            return redirect(url_for('login'))
+            return jsonify({'success': True})  # Возвращаем JSON-ответ при успешной смене пароля
         return render_template('reset-password.html', token=token)
     else:
-        flash('Недействительный или просроченный токен сброса пароля', 'error')
-        return redirect(url_for('reset_password_request'))
+        return jsonify({'error': 'Недействительный или просроченный токен сброса пароля'}), 400
 
 # def delete_user_by_username(username):
 #     with app.app_context():
@@ -212,4 +250,33 @@ def reset_password(token):
 #             print(f"Пользователь с именем {username} не найден.")
 #
 # # Пример вызова функции для удаления пользователя по имени
-# delete_user_by_username('asdasdasd')
+# delete_user_by_username('suddens')
+
+@app.route('/upload_avatar', methods=['POST'])
+def upload_avatar():
+    if 'file' not in request.files:
+        return 'No file part', 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return 'No selected file', 400
+
+    # Генерация уникального имени файла
+    filename = str(uuid.uuid4()) + secure_filename(file.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+    # Если пользователь уже загружал картинку, удаляем ее
+    if current_user.is_authenticated and current_user.avatar_path:
+        os.remove(current_user.avatar_path)
+
+    # Сохранение новой картинки на сервере
+    file.save(file_path)
+
+    # Обновление пути файла в базе данных для авторизованного пользователя
+    if current_user.is_authenticated:
+        current_user.avatar_path = file_path
+        db.session.commit()
+        return 'File uploaded successfully', 200
+    else:
+        return 'User not authenticated', 401
