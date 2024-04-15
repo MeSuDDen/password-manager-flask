@@ -18,15 +18,57 @@ mail = Mail(app)
 
 login_manager.init_app(app)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+# Роутинг по сайту:
+# ===============================================================
 
+# Помощь (/help)
+@app.route('/help')
+def help():
+    return render_template('help.html')
+#----------------------------------------------------------------
+
+# Пользовательское соглашение (/terms-of-use)
+@app.route('/terms-of-use')
+def termsOfUse():
+    return render_template('terms-of-use.html')
+#----------------------------------------------------------------
+
+# Домашняя страница (/home)
+@app.route('/home')
+def home():
+    return render_template('home.html')
+#----------------------------------------------------------------
+
+# Контакты (/contacts)
+@app.route('/contacts')
+def contacts():
+    return render_template('contacts.html')
+#----------------------------------------------------------------
+
+# Пользователи (/users)
+@app.route('/users')
+def users():
+    all_users = User.query.all()
+    return render_template('users.html', users=all_users)
+#----------------------------------------------------------------
+
+#================================================================
+
+
+# Роутинг по приложению:
+# ===============================================================
+
+# Главная страница приложжения (/profile)
 @app.route('/profile')
 @login_required
 def profile():
-    # Этот код будет выполнен только для аутентифицированных пользователей
-    return render_template('profile.html')
+    username = current_user.username
+    email = current_user.email
+    # Передаем данные в шаблон
+    return render_template('profile.html', username=username, email=email)
+#----------------------------------------------------------------
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -89,22 +131,7 @@ def register():
     return render_template('register.html')
 
 
-@app.route('/terms-of-use')
-def termsOfUse():
-    return render_template('terms-of-use.html')
 
-@app.route('/home')
-def home():
-    return render_template('home.html')
-
-@app.route('/contacts')
-def contacts():
-    return render_template('contacts.html')
-
-@app.route('/users')
-def users():
-    all_users = User.query.all()
-    return render_template('users.html', users=all_users)
 
 @app.route('/logout')
 @login_required
@@ -129,7 +156,7 @@ def reset_password_request():
             db.session.commit()
             send_password_reset_email(user)
             flash('Проверьте вашу электронную почту для инструкций по сбросу пароля', 'info')
-            return redirect(url_for('login'))
+            return redirect(url_for('reset_password_successfully'))
         else:
             flash('Пользователь с таким email не найден', 'error')
     return render_template('reset-password-request.html')
@@ -159,6 +186,10 @@ def reset_password(token):
     if user and user.reset_token_expiration > datetime.utcnow():
         if request.method == 'POST':
             password = request.form['password']
+            confirm_password = request.form['confirm-password']  # Получаем подтверждение пароля
+            if password != confirm_password:  # Проверяем, что пароли совпадают
+                errors = [('error', 'Пароли не совпадают, перепроверьте их вручную!')]  # Создаем список ошибок
+                return render_template('reset-password.html', token=token, errors=errors)  # Передаем ошибки в шаблон
             user.password = generate_password_hash(password)
             user.reset_token = None
             user.reset_token_expiration = None
@@ -168,7 +199,7 @@ def reset_password(token):
         return render_template('reset-password.html', token=token)
     else:
         flash('Недействительный или просроченный токен сброса пароля', 'error')
-        return redirect(url_for('reset-password-request'))
+        return redirect(url_for('reset_password_request'))
 
 # def delete_user_by_username(username):
 #     with app.app_context():
