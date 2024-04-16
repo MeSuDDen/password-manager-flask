@@ -92,7 +92,7 @@ def profile():
 def add_password():
     if request.method == 'POST':
         title = request.form['title']
-        password_text = request.form['password']
+        password = request.form['password']
         email = request.form['email']
         username = request.form['username']
 
@@ -102,7 +102,7 @@ def add_password():
         # Создаем новый объект пароля
         new_password = Password(
             title=title,
-            password=password_text,
+            password=password,
             email=email,
             username=username,
             user_id=current_user_id  # Связываем пароль с текущим пользователем
