@@ -21,9 +21,7 @@ def upgrade():
     with op.batch_alter_table('password', schema=None) as batch_op:
         batch_op.add_column(sa.Column('user_id', sa.Integer(), nullable=False))
         batch_op.create_foreign_key("fk_password_user_id", 'user', ['user_id'], ['id'])
-        batch_op.create_check_constraint("chk_password_strength", condition="LENGTH(password) BETWEEN 8 AND 20")
         # Добавьте другие ограничения, если необходимо
-
     # ### end Alembic commands ###
 
 

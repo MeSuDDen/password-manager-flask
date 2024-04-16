@@ -92,9 +92,13 @@ def profile():
 def add_password():
     if request.method == 'POST':
         title = request.form['title']
+        category = request.form['category']
+        description = request.form['description']
+        phone_number = request.form['phone_number']
         password = request.form['password']
         email = request.form['email']
         username = request.form['username']
+        website = request.form['website']
 
         # Получаем текущего пользователя
         current_user_id = current_user.id
@@ -102,6 +106,10 @@ def add_password():
         # Создаем новый объект пароля
         new_password = Password(
             title=title,
+            category=category,
+            description=description,
+            phone_number=phone_number,
+            website=website,
             password=password,
             email=email,
             username=username,
