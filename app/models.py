@@ -10,6 +10,9 @@ class User(UserMixin, db.Model):
     reset_token_expiration = db.Column(db.DateTime)
     avatar_path = db.Column(db.String(255))
 
+# Определяем связь с паролями пользователя
+    passwords = db.relationship('Password', backref='user', lazy=True)
+
 class Password(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -22,3 +25,6 @@ class Password(db.Model):
     color = db.Column(db.String(20))
     description = db.Column(db.Text)
     website = db.Column(db.String(200))
+
+    # Определяем внешний ключ для связи с пользователем
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

@@ -2,6 +2,7 @@ from flask import render_template, redirect, url_for, request, flash
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db, login_manager
 from app.models import User
+from app.models import Password
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import secrets
@@ -25,6 +26,12 @@ login_manager.init_app(app)
 
 # Роутинг по сайту:
 # ===============================================================
+
+# 404 (/404)
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+#----------------------------------------------------------------
 
 # Помощь (/help)
 @app.route('/help')
@@ -57,6 +64,13 @@ def users():
     return render_template('users.html', users=all_users)
 #----------------------------------------------------------------
 
+# Пользователи (/users)
+@app.route('/passwords')
+def passwords():
+    all_passwords = Password.query.all()
+    return render_template('passwords.html', passwords=all_passwords)
+#----------------------------------------------------------------
+
 #================================================================
 
 
@@ -69,10 +83,37 @@ def users():
 def profile():
     username = current_user.username
     email = current_user.email
-    # Передаем данные в шаблон
-    return render_template('profile.html', username=username, email=email)
+    passwords = Password.query.filter_by(user_id=current_user.id).all()  # Получаем список паролей для текущего пользователя
+    categories = Password.query.with_entities(Password.category).filter_by(user_id=current_user.id).distinct().all()
+    return render_template('profile.html', username=username, email=email, passwords=passwords, categories=categories)
 #----------------------------------------------------------------
+@app.route('/add_password', methods=['POST'])
+@login_required
+def add_password():
+    if request.method == 'POST':
+        title = request.form['title']
+        password_text = request.form['password']
+        email = request.form['email']
+        username = request.form['username']
 
+        # Получаем текущего пользователя
+        current_user_id = current_user.id
+
+        # Создаем новый объект пароля
+        new_password = Password(
+            title=title,
+            password=password_text,
+            email=email,
+            username=username,
+            user_id=current_user_id  # Связываем пароль с текущим пользователем
+        )
+
+        # Добавляем объект пароля в сессию и сохраняем его в базе данных
+        db.session.add(new_password)
+        db.session.commit()
+
+        # После сохранения пароля перенаправляем пользователя на страницу профиля
+        return redirect(url_for('profile'))
 
 
 @login_manager.user_loader
