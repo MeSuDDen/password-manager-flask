@@ -329,3 +329,20 @@ def upload_avatar():
         return 'File uploaded successfully', 200
     else:
         return 'User not authenticated', 401
+
+@app.route('/delete_all_passwords', methods=['GET'])
+@login_required
+def delete_all_passwords():
+    # Получаем текущего авторизованного пользователя
+    user_id = current_user.id
+
+    # Находим все записи в таблице Password для текущего пользователя и удаляем их
+    passwords = Password.query.filter_by(user_id=user_id).all()
+    for password in passwords:
+        db.session.delete(password)
+
+    # Сохраняем изменения в базе данных
+    db.session.commit()
+
+    # Перенаправляем пользователя на нужную страницу
+    return redirect(url_for('profile'))
