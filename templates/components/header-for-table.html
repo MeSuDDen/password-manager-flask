@@ -29,7 +29,10 @@
             <div id="actionsDropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                 <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="actionsDropdownButton">
                     <li>
-                        <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Отправить на почту</a>
+                        <a href="#" id="sendEmailButton" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                            <span id="loader" class="hidden inline-block animate-spin w-5 h-5 mr-3 border-b-2 border-gray-900 dark:border-gray-100"></span>
+                            Отправить на почту
+                        </a>
                     </li>
                 </ul>
                 <div class="py-1">
@@ -51,8 +54,8 @@
                     {% if categories %}
                     {% for category in categories %}
                     <li class="flex items-center">
-                        <input id="{{ category }}" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                        <label for="{{ category }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ category | safe }}</label>
+                        <input id="{{ category[0] | slugify  }}" type="checkbox" value="{{ category[0] }}" class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                        <label for="{{ category[0] | slugify  }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ category[0] | safe }}</label>
                     </li>
                     {% endfor %}
                     {% else %}
@@ -63,3 +66,95 @@
         </div>
     </div>
 </div>
+<!-- Модальное окно -->
+<div id="emailModal" class="modal fixed z-50 inset-0 overflow-y-auto hidden backdrop-blur-sm bg-black/25">
+    <div class="flex items-center justify-center h-full p-4 ">
+        <div class="fixed inset-0 transition-opacity"></div>
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-5 sm:p-6 flex justify-center gap-4">
+                <p class="text-gray-500 font-bold text-lg dark:text-white">Письмо отправляется...</p>
+                <div class="loader border-4 border-gray-400 border-t-blue-600 dark:border-gray-100 dark:border-t-blue-600 "></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterDropdown = document.getElementById('filterDropdown');
+        const checkboxes = filterDropdown.querySelectorAll('input[type="checkbox"]');
+        const passwordRows = document.querySelectorAll('.password-row');
+
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const selectedCategories = Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.id);
+
+                passwordRows.forEach(function(row) {
+                    const category = row.querySelector('.category').id; // Получаем идентификатор категории
+                    if (selectedCategories.length === 0 || selectedCategories.includes(category)) {
+                        row.style.display = 'table-row';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendEmailButton = document.getElementById('sendEmailButton');
+        const emailModal = document.getElementById('emailModal');
+        const closeModalButton = emailModal.querySelector('.closeModal');
+
+        sendEmailButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Предотвращаем стандартное действие ссылки
+            openModal();
+            sendEmail();
+        });
+
+        closeModalButton.addEventListener('click', function() {
+            closeModal();
+        });
+
+        function openModal() {
+            emailModal.style.display = 'block';
+        }
+
+        function closeModal() {
+            emailModal.style.display = 'none';
+        }
+
+        function sendEmail() {
+            fetch('/send_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+                .then(response => {
+                    closeModal(); // Скрываем модальное окно после получения ответа
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Ошибка при отправке письма');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при отправке письма');
+                });
+        }
+    });
+
+
+
+
+
+
+
+
+</script>

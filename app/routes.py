@@ -12,6 +12,12 @@ from validate_email import validate_email
 import os
 from werkzeug.utils import secure_filename
 import uuid
+import transliterate
+from slugify import slugify
+
+@app.template_filter('slugify')
+def custom_slugify(s):
+    return slugify(s)
 
 # Настройки SMTP сервера
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -99,6 +105,7 @@ def add_password():
         email = request.form['email']
         username = request.form['username']
         website = request.form['website']
+        color = request.form['color']  # Получаем выбранный цвет
 
         # Получаем текущего пользователя
         current_user_id = current_user.id
@@ -113,6 +120,7 @@ def add_password():
             password=password,
             email=email,
             username=username,
+            color=color,  # Сохраняем цвет в базе данных
             user_id=current_user_id  # Связываем пароль с текущим пользователем
         )
 
@@ -346,3 +354,33 @@ def delete_all_passwords():
 
     # Перенаправляем пользователя на нужную страницу
     return redirect(url_for('profile'))
+
+@app.route('/send_email', methods=['POST'])
+@login_required
+def send_email():
+    # Получаем текущего пользователя
+    user = current_user
+
+    # Получаем все пароли пользователя из базы данных
+    passwords = Password.query.filter_by(user_id=user.id).all()
+
+    # Формируем текст сообщения для письма
+    message_body = 'Список ваших паролей:\n\n'
+    for password in passwords:
+        message_body += f"Категория: {password.category}\n"
+        message_body += f"Описание: {password.description}\n"
+        message_body += f"Логин: {password.username}\n"
+        message_body += f"Пароль: {password.password}\n\n"
+
+    # Отправляем письмо на адрес пользователя
+    try:
+        send_email_to_user(user.email, message_body)
+        return jsonify({'message': 'Письмо успешно отправлено'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def send_email_to_user(recipient_email, message_body):
+    # Отправляем письмо на адрес получателя
+    msg = Message('Ваши пароли', sender='noreply@example.com', recipients=[recipient_email])
+    msg.body = message_body
+    mail.send(msg)

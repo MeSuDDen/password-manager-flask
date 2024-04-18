@@ -2,35 +2,44 @@
     <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
         <tr>
-            <th scope="col" class="px-4 py-3">Картинка</th>
-            <th scope="col" class="px-4 py-3">Название</th>
-            <th scope="col" class="px-4 py-3">Категория</th>
-            <th scope="col" class="px-4 py-3">Логин</th>
-            <th scope="col" class="px-4 py-3">Почта</th>
-            <th scope="col" class="px-4 py-3">Пароль</th>
-            <th scope="col" class="px-4 py-3">Описание</th>
-            <th scope="col" class="px-4 py-3">Номер телефона</th>
-            <th scope="col" class="px-4 py-3">Веб-сайт</th>
-            <th scope="col" class="px-4 py-3">
+            <th scope="col" class="px-4 py-3 text-center">Картинка</th>
+            <th scope="col" class="px-4 py-3 text-center">Название</th>
+            <th scope="col" class="px-4 py-3 text-center">Категория</th>
+            <th scope="col" class="px-4 py-3 text-center">Логин</th>
+            <th scope="col" class="px-4 py-3 text-center">Почта</th>
+            <th scope="col" class="px-4 py-3 text-center">Пароль</th>
+            <th scope="col" class="px-4 py-3 text-center">Описание</th>
+            <th scope="col" class="px-4 py-3 text-center">Номер телефона</th>
+            <th scope="col" class="px-4 py-3 text-center">Веб-сайт</th>
+            <th scope="col" class="px-4 py-3 text-center">
                 <span class="sr-only">Actions</span>
             </th>
         </tr>
         </thead>
         <tbody>
         {% for password in passwords %}
-        <tr class="border-b dark:border-gray-700">
-            <td class="px-4 py-3">картинка</td>
-            <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ password.title }}</th>
-            <td class="px-4 py-2">
-                <span class="bg-primary-100 text-primary-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300">{{ password.category }}</span>
+        <tr class="border-b dark:border-gray-700 password-row">
+            <td class="px-4 py-3 text-center">картинка</td>
+            <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white text-center">{{ password.title }}</th>
+            <td class="px-4 py-2 text-center">
+                <span id="{{ password.category | slugify }}" class="category bg-primary-100 text-white text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-white" style="background-color: {{ password.color }}">{{ password.category }}</span>
             </td>
-            <td class="px-4 py-3">{{ password.username }}</td>
-            <td class="px-4 py-3">{{ password.email }}</td>
-            <td class="px-4 py-3">{{ password.password }}</td>
-            <td class="px-4 py-3">{{ password.description }}</td>
-            <td class="px-4 py-3">{{ password.phone_number }}</td>
-            <td class="px-4 py-3">{{ password.website }}</td>
-            <td class="px-4 py-3 flex items-center justify-end">
+            <td class="px-4 py-3 text-center">{{ password.username }}</td>
+            <td class="px-4 py-3 text-center">{{ password.email }}</td>
+            <td class="px-4 py-3 password-cell min-w-[200px] text-center">
+                <span class="password-hidden" style="display: none;">{{ password.password }}</span>
+                <span class="password-visible"></span>
+                <button class="show-password-button" onclick="togglePasswordVisibility(this)">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
+                <button class="copy-password-button" onclick="copyPassword(this)">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+            </td>
+            <td class="px-4 py-3 text-center">{{ password.description }}</td>
+            <td class="px-4 py-3 text-center">{{ password.phone_number }}</td>
+            <td class="px-4 py-3 text-center"><a class="hover:text-white transition-all" target="_blank" href="{{ password.website }}">{{ password.website }}</a></td>
+            <td class="px-4 py-3 text-center flex items-center justify-end">
                 <button id="apple-imac-27-dropdown-button" data-dropdown-toggle="apple-imac-27-dropdown" class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100" type="button">
                     <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -96,3 +105,71 @@
         </li>
     </ul>
 </nav>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('simple-search');
+        const rows = document.querySelectorAll('tbody tr');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = searchInput.value.toLowerCase();
+
+            rows.forEach(function(row) {
+                const title = row.querySelector('th').textContent.toLowerCase();
+                const category = row.querySelector('.category').textContent.toLowerCase();
+                const username = row.querySelectorAll('td')[2].textContent.toLowerCase();
+                const email = row.querySelectorAll('td')[3].textContent.toLowerCase();
+                const description = row.querySelectorAll('td')[5].textContent.toLowerCase();
+                const phoneNumber = row.querySelectorAll('td')[6].textContent.toLowerCase();
+                const website = row.querySelectorAll('td')[7].textContent.toLowerCase();
+
+                if (title.includes(searchTerm) || category.includes(searchTerm) || username.includes(searchTerm) || email.includes(searchTerm) || description.includes(searchTerm) || phoneNumber.includes(searchTerm) || website.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+
+    function togglePasswordVisibility(button) {
+        const passwordHidden = button.parentElement.querySelector('.password-hidden');
+        const passwordVisible = button.parentElement.querySelector('.password-visible');
+        const eyeIcon = button.querySelector('i');
+        if (passwordHidden.style.display === 'none') {
+            passwordHidden.style.display = 'inline';
+            passwordVisible.style.display = 'none';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        } else {
+            passwordHidden.style.display = 'none';
+            passwordVisible.style.display = 'inline';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        }
+    }
+
+    function copyPassword(button) {
+        const cell = button.parentElement;
+        const passwordHidden = cell.querySelector('.password-hidden');
+        const password = passwordHidden.textContent;
+        navigator.clipboard.writeText(password).then(function() {
+            console.log('Пароль скопирован!');
+        }, function() {
+            console.log('Не удалось скопировать пароль. Пожалуйста, скопируйте его вручную.');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordCells = document.querySelectorAll('.password-cell');
+
+        passwordCells.forEach(function(cell) {
+            const passwordHidden = cell.querySelector('.password-hidden');
+            const passwordLength = passwordHidden.textContent.length;
+            const stars = '*'.repeat(passwordLength);
+            cell.querySelector('.password-visible').textContent = stars;
+        });
+    });
+
+
+</script>
