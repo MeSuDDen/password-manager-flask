@@ -20,7 +20,7 @@ class Password(db.Model):
     email = db.Column(db.String(120), nullable=False)
     username = db.Column(db.String(80), nullable=False)
     phone_number = db.Column(db.String(20))
-    icon = db.Column(db.String(100))
+    image_path = db.Column(db.String(200))
     category = db.Column(db.String(50))
     color = db.Column(db.String(20))
     description = db.Column(db.Text)

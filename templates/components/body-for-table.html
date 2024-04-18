@@ -19,7 +19,16 @@
         <tbody>
         {% for password in passwords %}
         <tr class="border-b dark:border-gray-700 password-row">
-            <td class="px-4 py-3 text-center">картинка</td>
+            {% if password.image_path %}
+            <td class="px-4 py-3 flex justify-center items-center">
+                <img class="w-10 max-w-10 max-h-10" src="static/{{ password.image_path }}" alt="Изображение">
+            </td>
+            {% else %}
+            <td class="px-4 py-3 flex justify-center items-center">
+                <img class="w-10" src="{{url_for('static',filename='src/images/item-placeholder.svg')}}" alt="Изображение">
+            </td>
+            {% endif %}
+
             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white text-center">{{ password.title }}</th>
             <td class="px-4 py-2 text-center">
                 <span id="{{ password.category | slugify }}" class="category bg-primary-100 text-white text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-white" style="background-color: {{ password.color }}">{{ password.category }}</span>
@@ -39,7 +48,7 @@
             <td class="px-4 py-3 text-center">{{ password.description }}</td>
             <td class="px-4 py-3 text-center">{{ password.phone_number }}</td>
             <td class="px-4 py-3 text-center"><a class="hover:text-white transition-all" target="_blank" href="{{ password.website }}">{{ password.website }}</a></td>
-            <td class="px-4 py-3 text-center flex items-center justify-end">
+            <td class="px-4 py-3 text-center">
                 <button id="apple-imac-27-dropdown-button" data-dropdown-toggle="apple-imac-27-dropdown" class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100" type="button">
                     <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -64,7 +73,7 @@
         </tbody>
     </table>
 </div>
-<nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4" aria-label="Table navigation">
+<!-- <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4" aria-label="Table navigation">
                 <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
                     Showing
                     <span class="font-semibold text-gray-900 dark:text-white">1-10</span>
@@ -104,7 +113,7 @@
             </a>
         </li>
     </ul>
-</nav>
+</nav> -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('simple-search');

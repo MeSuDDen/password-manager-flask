@@ -12,9 +12,9 @@
                 <div class="flex justify-center items-center flex-col w-full">
                     <div class="relative">
                         {% if current_user.avatar_path %}
-                        <img class="relative avatar w-[100px] h-[100px] rounded-full pointer-events-none" width="100%" src="{{ current_user.avatar_path }}" alt="Avatar" draggable="false">
+                            <img class="relative avatar w-[100px] h-[100px] rounded-full pointer-events-none" width="100%" src="{{ current_user.avatar_path }}" alt="Avatar" draggable="false">
                         {% else %}
-                        <img class="relative avatar w-[100px] h-[100px] rounded-full pointer-events-none" width="100%" src="https://w7.pngwing.com/pngs/862/646/png-transparent-beard-hipster-male-man-avatars-xmas-giveaway-icon-thumbnail.png" alt="Avatar" draggable="false">
+                            <img class="relative avatar w-[100px] h-[100px] rounded-full pointer-events-none" width="100%" src="https://w7.pngwing.com/pngs/862/646/png-transparent-beard-hipster-male-man-avatars-xmas-giveaway-icon-thumbnail.png" alt="Avatar" draggable="false">
                         {% endif %}
                         <div class="absolute top-0 left-0 w-[100px] h-[100px] hover:bg-red-300 rounded-full cursor-pointer" onclick="document.getElementById('updateAvatar').click()"></div>
                         <form id="avatarForm" class="hidden" enctype="multipart/form-data">

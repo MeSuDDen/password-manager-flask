@@ -93,35 +93,46 @@ def profile():
     categories = Password.query.with_entities(Password.category).filter_by(user_id=current_user.id).distinct().all()
     return render_template('profile.html', username=username, email=email, passwords=passwords, categories=categories)
 #----------------------------------------------------------------
+from uuid import uuid4
+
 @app.route('/add_password', methods=['POST'])
 @login_required
 def add_password():
     if request.method == 'POST':
-        title = request.form['title']
-        category = request.form['category']
-        description = request.form['description']
-        phone_number = request.form['phone_number']
-        password = request.form['password']
-        email = request.form['email']
-        username = request.form['username']
-        website = request.form['website']
-        color = request.form['color']  # Получаем выбранный цвет
+        # Получаем файл изображения из формы
+        if 'image' in request.files and request.files['image'].filename != '':
+            image = request.files['image']
 
-        # Получаем текущего пользователя
-        current_user_id = current_user.id
+            # Получаем путь к папке пользователя
+            user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
 
-        # Создаем новый объект пароля
+            # Создаем папку пользователя, если она не существует
+            if not os.path.exists(user_folder):
+                os.makedirs(user_folder)
+
+            # Генерируем уникальное имя файла
+            filename = str(uuid4()) + secure_filename(image.filename)
+
+            # Сохраняем изображение на сервере
+            image.save(os.path.join(user_folder, filename))
+
+            # Сохраняем путь к изображению в базе данных
+            image_path = os.path.join('uploads', current_user.username, filename)
+        else:
+            image_path = ''
+
         new_password = Password(
-            title=title,
-            category=category,
-            description=description,
-            phone_number=phone_number,
-            website=website,
-            password=password,
-            email=email,
-            username=username,
-            color=color,  # Сохраняем цвет в базе данных
-            user_id=current_user_id  # Связываем пароль с текущим пользователем
+            title=request.form['title'],
+            category=request.form['category'],
+            description=request.form['description'],
+            phone_number=request.form['phone_number'],
+            website=request.form['website'],
+            password=request.form['password'],
+            email=request.form['email'],
+            username=request.form['username'],
+            color=request.form['color'],  # Сохраняем цвет в базе данных
+            image_path=image_path,  # Сохраняем путь к изображению
+            user_id=current_user.id  # Связываем пароль с текущим пользователем
         )
 
         # Добавляем объект пароля в сессию и сохраняем его в базе данных
@@ -130,6 +141,9 @@ def add_password():
 
         # После сохранения пароля перенаправляем пользователя на страницу профиля
         return redirect(url_for('profile'))
+
+
+
 
 
 @login_manager.user_loader
@@ -347,6 +361,21 @@ def delete_all_passwords():
     # Находим все записи в таблице Password для текущего пользователя и удаляем их
     passwords = Password.query.filter_by(user_id=user_id).all()
     for password in passwords:
+        # Получаем путь к изображению
+        image_path = password.image_path
+        if image_path:
+            # Проверяем, существует ли файл
+            if os.path.exists(image_path):
+                # Если файл существует, удаляем его
+                try:
+                    os.remove(image_path)
+                    print(f"Изображение по пути {image_path} успешно удалено.")
+                except Exception as e:
+                    print(f"Ошибка при удалении изображения {image_path}: {e}")
+            else:
+                print(f"Изображение по пути {image_path} не найдено.")
+
+        # Удаляем объект пароля из базы данных
         db.session.delete(password)
 
     # Сохраняем изменения в базе данных
@@ -354,6 +383,7 @@ def delete_all_passwords():
 
     # Перенаправляем пользователя на нужную страницу
     return redirect(url_for('profile'))
+
 
 @app.route('/send_email', methods=['POST'])
 @login_required
