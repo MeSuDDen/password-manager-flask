@@ -310,18 +310,18 @@ def reset_password(token):
     else:
         return jsonify({'error': 'Недействительный или просроченный токен сброса пароля'}), 400
 
-# def delete_user_by_username(username):
-#     with app.app_context():
-#         user = User.query.filter_by(username=username).first()
-#         if user:
-#             db.session.delete(user)
-#             db.session.commit()
-#             print(f"Пользователь с именем {username} успешно удален.")
-#         else:
-#             print(f"Пользователь с именем {username} не найден.")
-#
-# # Пример вызова функции для удаления пользователя по имени
-# delete_user_by_username('suddens')
+def delete_user_by_username(username):
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            print(f"Пользователь с именем {username} успешно удален.")
+        else:
+            print(f"Пользователь с именем {username} не найден.")
+
+# Пример вызова функции для удаления пользователя по имени
+delete_user_by_username('SuDDen')
 
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
