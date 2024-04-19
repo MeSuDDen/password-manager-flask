@@ -89,9 +89,11 @@ def passwords():
 def profile():
     username = current_user.username
     email = current_user.email
-    passwords = Password.query.filter_by(user_id=current_user.id).all()  # Получаем список паролей для текущего пользователя
+    passwords = Password.query.filter_by(user_id=current_user.id).all()
     categories = Password.query.with_entities(Password.category).filter_by(user_id=current_user.id).distinct().all()
-    return render_template('profile.html', username=username, email=email, passwords=passwords, categories=categories)
+    password_id = request.args.get('password_id')  # Получаем password_id из запроса
+    return render_template('profile.html', username=username, email=email, passwords=passwords, categories=categories, password_id=password_id)
+
 #----------------------------------------------------------------
 from uuid import uuid4
 
@@ -310,18 +312,22 @@ def reset_password(token):
     else:
         return jsonify({'error': 'Недействительный или просроченный токен сброса пароля'}), 400
 
-def delete_user_by_username(username):
-    with app.app_context():
-        user = User.query.filter_by(username=username).first()
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-            print(f"Пользователь с именем {username} успешно удален.")
-        else:
-            print(f"Пользователь с именем {username} не найден.")
+# def delete_user_by_username(username):
+#     with app.app_context():
+#         user = User.query.filter_by(username=username).first()
+#         if user:
+#             # Check if there are associated passwords and delete them
+#             for password in user.passwords:
+#                 db.session.delete(password)
+#             db.session.delete(user)
+#             db.session.commit()
+#             print(f"User with username '{username}' and associated passwords successfully deleted.")
+#         else:
+#             print(f"User with username '{username}' not found.")
+#
+# # Example usage:
+# delete_user_by_username('sudden')
 
-# Пример вызова функции для удаления пользователя по имени
-delete_user_by_username('SuDDen')
 
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
@@ -414,3 +420,117 @@ def send_email_to_user(recipient_email, message_body):
     msg = Message('Ваши пароли', sender='noreply@example.com', recipients=[recipient_email])
     msg.body = message_body
     mail.send(msg)
+
+
+@app.route('/delete-password/<int:password_id>', methods=['DELETE'])
+def delete_password(password_id):
+    password = Password.query.get_or_404(password_id)
+
+    # Проверяем, есть ли путь к изображению в объекте пароля
+    if password.image_path:
+        # Получаем полный путь к изображению на сервере
+        image_path = 'static/' + password.image_path
+
+        # Проверяем существует ли файл по указанному пути
+        if os.path.exists(image_path):
+            try:
+                os.remove(image_path)
+                print(f"Изображение по пути {image_path} успешно удалено.")
+            except Exception as e:
+                print(f"Ошибка при удалении изображения {image_path}: {e}")
+        else:
+            print(f"Изображение по пути {image_path} не найдено.")
+
+    db.session.delete(password)
+    db.session.commit()
+
+    return jsonify({'message': 'Password deleted successfully'}), 200
+
+@app.route('/get_password_data/<int:password_id>', methods=['GET'])
+def get_password_data(password_id):
+    # Fetch password data from the database based on the password_id
+    password = Password.query.filter_by(id=password_id).first()
+
+    # Check if the password exists
+    if password:
+        # Convert the password data to a dictionary
+        password_data = {
+            'id': password.id,
+            'title': password.title,
+            'username': password.username,
+            'category': password.category,
+            'phone_number': password.phone_number,
+            'website': password.website,
+            'email': password.email,
+            'password': password.password,
+            'description': password.description
+        }
+        return jsonify(password_data)
+    else:
+        # If password with given ID doesn't exist, return 404 Not Found
+        return jsonify({'error': 'Password not found'}), 404
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+# Функция для генерации уникального имени файла
+def generate_unique_filename(filename):
+    return str(uuid.uuid4()) + secure_filename(filename)
+
+# Функция для проверки разрешенных расширений файлов
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/update-password', methods=['POST'])
+def update_password():
+    # Получаем данные из формы
+    password_id = request.form.get('id-edit')
+    title = request.form.get('title-edit')
+    username = request.form.get('username-edit')
+    category = request.form.get('category-edit')
+    color = request.form.get('color-edit')
+    phone_number = request.form.get('phone_number-edit')
+    website = request.form.get('website-edit')
+    email = request.form.get('email-edit')
+    password_edit = request.form.get('password-edit')
+    description = request.form.get('description-edit')
+
+    # Получаем файл изображения из формы, если он был загружен
+    image = request.files.get('image-edit')
+
+    # Находим объект пароля в базе данных по его идентификатору
+    password = Password.query.get_or_404(password_id)
+
+    # Обновляем данные пароля
+    password.title = title
+    password.username = username
+    password.category = category
+    password.color = color
+    password.phone_number = phone_number
+    password.website = website
+    password.email = email
+    password.password = password_edit
+    password.description = description
+
+    # Если было загружено новое изображение
+    if image and image.filename != '':
+        # Удаляем старое изображение, если оно существует
+        if password.image_path:
+            image_path_parts = password.image_path.split('uploads/')
+            if len(image_path_parts) > 1:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image_path_parts[1]))
+
+        # Генерируем уникальное имя файла
+        filename = str(uuid4()) + secure_filename(image.filename)
+
+        # Сохраняем изображение на сервере
+        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        # Сохраняем путь к изображению в объекте пароля
+        password.image_path = os.path.join('uploads', filename)
+
+    # Сохраняем изменения в базе данных
+    db.session.commit()
+
+    # Перенаправляем пользователя обратно на страницу профиля или на другую страницу
+    return redirect(url_for('profile'))

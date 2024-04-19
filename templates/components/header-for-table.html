@@ -107,16 +107,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         const sendEmailButton = document.getElementById('sendEmailButton');
         const emailModal = document.getElementById('emailModal');
-        const closeModalButton = emailModal.querySelector('.closeModal');
 
         sendEmailButton.addEventListener('click', function(event) {
             event.preventDefault(); // Предотвращаем стандартное действие ссылки
             openModal();
             sendEmail();
-        });
-
-        closeModalButton.addEventListener('click', function() {
-            closeModal();
         });
 
         function openModal() {

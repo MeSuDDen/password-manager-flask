@@ -7,17 +7,17 @@
 {% block content %}
 <script>
     function uploadAvatar() {
-        var formData = new FormData();
-        var file = document.querySelector('input[type=file]').files[0];
+        let formData = new FormData();
+        let file = document.querySelector('input[type=file]').files[0];
         formData.append('file', file);
 
-        var xhr = new XMLHttpRequest();
+        let xhr = new XMLHttpRequest();
         xhr.open('POST', '/upload_avatar', true);
         xhr.onload = function () {
             if (xhr.status === 200) {
                 // Обновление изображения на странице без перезагрузки
-                var preview = document.querySelector('.avatar');
-                var reader = new FileReader();
+                let preview = document.querySelector('.avatar');
+                let reader = new FileReader();
                 reader.onloadend = function () {
                     preview.src = reader.result;
                 }
@@ -39,6 +39,9 @@
         <!-- Модальное окно для добавления пароля -->
         {% include 'components/add-modal-password.html' %}
 
+        <!-- Модальное окно для добавления пароля -->
+        {% include 'components/edit-modal-password.html' %}
+
         <div class="bg-white dark:bg-gray-800 relative shadow-md overflow-hidden w-full">
 
             <!-- Модальное окно для добавления пароля -->
@@ -54,19 +57,19 @@
     </div>
 </section>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Находим кнопки и модальное окно
-        var addButton = document.getElementById('add-password-button');
-        var modal = document.getElementById('add-password-modal');
-        var closeButton = document.getElementById('close-add-password-modal');
+        let addButton = document.getElementById('add-password-button');
+        let modal = document.getElementById('add-password-modal');
+        let closeButton = document.getElementById('close-add-password-modal');
 
         // Добавляем обработчик события клика на кнопку "Добавить"
-        addButton.addEventListener('click', function() {
+        addButton.addEventListener('click', function () {
             modal.classList.remove('hidden');
         });
 
         // Добавляем обработчик события клика на кнопку "Закрыть"
-        closeButton.addEventListener('click', function() {
+        closeButton.addEventListener('click', function () {
             modal.classList.add('hidden');
         });
     });

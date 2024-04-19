@@ -25,14 +25,20 @@
             </td>
             {% else %}
             <td class="px-4 py-3 flex justify-center items-center">
-                <img class="w-10" src="{{url_for('static',filename='src/images/item-placeholder.svg')}}" alt="Изображение">
+                <img class="w-10" src="{{url_for('static',filename='src/images/item-placeholder.svg')}}"
+                     alt="Изображение">
             </td>
             {% endif %}
 
-            <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white text-center">{{ password.title }}</th>
+            <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white text-center">{{
+                password.title }}
+            </th>
             <td class="px-4 py-2 text-center">
-                <span id="{{ password.category | slugify }}" class="category bg-primary-100 text-white text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-white" style="background-color: {{ password.color }}">{{ password.category }}</span>
+                <span id="{{ password.category | slugify }}"
+                      class="category bg-primary-100 text-white text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-white"
+                      style="background-color: {{ password.color }}">{{ password.category }}</span>
             </td>
+            <td class="hidden">{{ password.id }}</td>
             <td class="px-4 py-3 text-center">{{ password.username }}</td>
             <td class="px-4 py-3 text-center">{{ password.email }}</td>
             <td class="px-4 py-3 password-cell min-w-[200px] text-center">
@@ -47,24 +53,34 @@
             </td>
             <td class="px-4 py-3 text-center">{{ password.description }}</td>
             <td class="px-4 py-3 text-center">{{ password.phone_number }}</td>
-            <td class="px-4 py-3 text-center"><a class="hover:text-white transition-all" target="_blank" href="{{ password.website }}">{{ password.website }}</a></td>
+            <td class="px-4 py-3 text-center"><a class="hover:text-white transition-all" target="_blank"
+                                                 href="{{ password.website }}">{{ password.website }}</a></td>
             <td class="px-4 py-3 text-center">
-                <button id="apple-imac-27-dropdown-button" data-dropdown-toggle="apple-imac-27-dropdown" class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100" type="button">
-                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                <button id="apple-imac-27-dropdown-button-{{ loop.index }}"
+                        data-dropdown-toggle="apple-imac-27-dropdown-{{ loop.index }}"
+                        class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100"
+                        type="button">
+                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
                     </svg>
                 </button>
-                <div id="apple-imac-27-dropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="apple-imac-27-dropdown-button">
-                        <li>
+                <div id="apple-imac-27-dropdown-{{ loop.index }}"
+                     class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
+                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
+                        aria-labelledby="apple-imac-27-dropdown-button">
+                        <!-- <li>
                             <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Show</a>
-                        </li>
+                        </li>-->
                         <li>
-                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
+                            <a href="#"
+                               class="edit-button block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white" data-password-id="{{ password.id }}">Редактировать</a>
                         </li>
                     </ul>
                     <div class="py-1">
-                        <a href="#" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete</a>
+                        <button class="delete-password-button w-full block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                                data-password-id="{{ password.id }}">Удалить
+                        </button>
                     </div>
                 </div>
             </td>
@@ -115,14 +131,89 @@
     </ul>
 </nav> -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('.edit-button');
+
+        editButtons.forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                // Получаем идентификатор пароля из атрибута data-password-id
+                const passwordId = button.getAttribute('data-password-id');
+
+                // Выполняем AJAX запрос для получения данных пароля
+                fetch(`/get_password_data/${passwordId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Заполняем поля модального окна данными из ответа
+                        document.getElementById('id-edit').value = data.id;
+                        document.getElementById('title-edit').value = data.title;
+                        document.getElementById('username-edit').value = data.username;
+                        document.getElementById('category-edit').value = data.category;
+                        document.getElementById('phone_number-edit').value = data.phone_number;
+                        document.getElementById('website-edit').value = data.website;
+                        document.getElementById('email-edit').value = data.email;
+                        document.getElementById('password-edit').value = data.password;
+                        document.getElementById('description-edit').value = data.description;
+
+                        // Отображаем модальное окно
+                        document.getElementById('edit-password-modal').classList.remove('hidden');
+
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        // В случае ошибки вы можете отобразить сообщение об ошибке или выполнить другие действия
+                    });
+            });
+        });
+
+        // Обработка закрытия модального окна
+        document.getElementById('close-edit-password-modal').addEventListener('click', function () {
+            document.getElementById('edit-password-modal').classList.add('hidden');
+        });
+    });
+
+
+    // Обработчик клика на кнопке "Delete"
+    document.querySelectorAll('.delete-password-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const passwordId = button.getAttribute('data-password-id');
+
+            // Отправка запроса на удаление элемента на сервер
+            fetch(`/delete-password/${passwordId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Успешное удаление
+                        // Удаление строки из таблицы
+                        const row = button.closest('.password-row');
+                        row.remove();
+                    } else {
+                        // Обработка ошибки
+                        console.error('Ошибка удаления элемента');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка удаления элемента:', error);
+                });
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('simple-search');
         const rows = document.querySelectorAll('tbody tr');
 
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             const searchTerm = searchInput.value.toLowerCase();
 
-            rows.forEach(function(row) {
+            rows.forEach(function (row) {
                 const title = row.querySelector('th').textContent.toLowerCase();
                 const category = row.querySelector('.category').textContent.toLowerCase();
                 const username = row.querySelectorAll('td')[2].textContent.toLowerCase();
@@ -162,17 +253,17 @@
         const cell = button.parentElement;
         const passwordHidden = cell.querySelector('.password-hidden');
         const password = passwordHidden.textContent;
-        navigator.clipboard.writeText(password).then(function() {
+        navigator.clipboard.writeText(password).then(function () {
             console.log('Пароль скопирован!');
-        }, function() {
+        }, function () {
             console.log('Не удалось скопировать пароль. Пожалуйста, скопируйте его вручную.');
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const passwordCells = document.querySelectorAll('.password-cell');
 
-        passwordCells.forEach(function(cell) {
+        passwordCells.forEach(function (cell) {
             const passwordHidden = cell.querySelector('.password-hidden');
             const passwordLength = passwordHidden.textContent.length;
             const stars = '*'.repeat(passwordLength);
