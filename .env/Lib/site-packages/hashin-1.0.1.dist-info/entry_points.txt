@@ -1,0 +1,3 @@
+[console_scripts]
+hashin = hashin:main
+

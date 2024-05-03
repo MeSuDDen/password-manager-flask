@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  flask_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/mydatabase  # измените параметры подключения к базе данных
+    volumes:
+      - flask_data:/app/data  # монтируем том для сохранения данных Flask приложения
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase  # имя вашей базы данных
+    volumes:
+      - db_data:/var/lib/postgresql/data  # монтируем том для сохранения данных базы данных
+
+volumes:
+  flask_data:
+  db_data:
